@@ -1,11 +1,20 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, ContextTypes, filters
+from telegram.ext import (
+    Application,
+    CommandHandler,
+    CallbackQueryHandler,
+    MessageHandler,
+    ContextTypes,
+    filters,
+)
 import os
 
 TOKEN = os.getenv("TOKEN")
 
 AFFILIATE_LINK = "https://stake.bet/?c=LeBonPronoVIP"
 VIP_LINK = "https://t.me/+nWe-miC_XLJkZmY0"
+
+ADMIN_ID = 494644532
 
 user_state = {}
 
@@ -14,7 +23,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(
         "👋 Bienvenue sur LeBonPronoVIP !\n\n"
-        "Clique sur le bouton ci-dessous pour accéder à la suite 👇",
+        "📈 Accède à mes meilleurs pronostics en rejoignant le VIP.\n\n"
+        "👇 Clique sur le bouton ci-dessous pour commencer.",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
@@ -27,17 +37,18 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await q.edit_message_text(
             "🔥 Pour accéder au VIP, inscris-toi via mon lien partenaire.\n\n"
-            "✅ Une fois inscrit, reviens ici et clique sur « C’est fait ».",
+            "✅ Une fois inscrit, reviens ici et clique sur « C'est fait ».",
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("🚀 Ouvrir le lien", url=AFFILIATE_LINK)],
-                [InlineKeyboardButton("✅ C’est fait", callback_data="done")]
+                [InlineKeyboardButton("🚀 S'inscrire", url=AFFILIATE_LINK)],
+                [InlineKeyboardButton("✅ C'est fait", callback_data="done")]
             ])
         )
 
     elif q.data == "done":
         user_state[q.from_user.id] = "pseudo"
+
         await q.edit_message_text(
-            "✍️ Envoie maintenant ton pseudo Stake pour que je puisse vérifier ton inscription."
+            "✍️ Envoie maintenant ton pseudo Stake afin que je puisse vérifier ton inscription."
         )
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -50,15 +61,31 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         username = f"@{user.username}" if user.username else "Pas de pseudo Telegram"
         first_name = user.first_name or "Non renseigné"
 
-        print("🔥 Nouvelle demande VIP")
-        print(f"Pseudo Telegram : {username}")
+        # Notification sur ton Telegram
+        await context.bot.send_message(
+            chat_id=ADMIN_ID,
+            text=(
+                "🔥 NOUVELLE DEMANDE VIP\n\n"
+                f"👤 Prénom : {first_name}\n"
+                f"📱 Telegram : {username}\n"
+                f"🆔 ID : {uid}\n"
+                f"🎰 Pseudo Stake : {pseudo_stake}"
+            )
+        )
+
+        # Log Render
+        print("🔥 NOUVELLE DEMANDE VIP")
         print(f"Prénom : {first_name}")
+        print(f"Pseudo Telegram : {username}")
         print(f"ID Telegram : {uid}")
         print(f"Pseudo Stake : {pseudo_stake}")
 
+        # Réponse utilisateur
         await update.message.reply_text(
-            "✅ Merci ! Ta demande a bien été reçue.\n\n"
-            "Je vais vérifier ton inscription et t’ajouter au VIP manuellement."
+            f"✅ Merci !\n\n"
+            f"🔒 Voici le lien du VIP :\n{VIP_LINK}\n\n"
+            f"👉 Fais une demande pour rejoindre le canal.\n"
+            f"Une fois ton inscription Stake vérifiée, j'accepterai ta demande manuellement."
         )
 
         user_state[uid] = "done"
