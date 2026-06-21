@@ -17,6 +17,7 @@ VIP_LINK = "https://t.me/+nWe-miC_XLJkZmY0"
 ADMIN_ID = 494644532
 
 user_state = {}
+user_data = {}
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [[InlineKeyboardButton("🔥 Accéder", callback_data="go")]]
@@ -45,7 +46,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
     elif q.data == "done":
-        user_state[q.from_user.id] = "pseudo"
+        user_state[q.from_user.id] = "pseudo_stake"
 
         await q.edit_message_text(
             "✍️ Envoie maintenant ton pseudo Stake afin que je puisse vérifier ton inscription."
@@ -53,15 +54,25 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     uid = update.message.from_user.id
+    message = update.message.text
+    user = update.message.from_user
 
-    if user_state.get(uid) == "pseudo":
-        pseudo_stake = update.message.text
-        user = update.message.from_user
+    if user_state.get(uid) == "pseudo_stake":
+        user_data[uid] = {"pseudo_stake": message}
+        user_state[uid] = "discord"
+
+        await update.message.reply_text(
+            "✅ Pseudo Stake reçu.\n\n"
+            "💬 Envoie maintenant ton Discord au cas où j’ai besoin de te contacter."
+        )
+
+    elif user_state.get(uid) == "discord":
+        discord = message
+        pseudo_stake = user_data.get(uid, {}).get("pseudo_stake", "Non renseigné")
 
         username = f"@{user.username}" if user.username else "Pas de pseudo Telegram"
         first_name = user.first_name or "Non renseigné"
 
-        # Notification sur ton Telegram
         await context.bot.send_message(
             chat_id=ADMIN_ID,
             text=(
@@ -69,18 +80,18 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"👤 Prénom : {first_name}\n"
                 f"📱 Telegram : {username}\n"
                 f"🆔 ID : {uid}\n"
-                f"🎰 Pseudo Stake : {pseudo_stake}"
+                f"🎰 Pseudo Stake : {pseudo_stake}\n"
+                f"💬 Discord : {discord}"
             )
         )
 
-        # Log Render
         print("🔥 NOUVELLE DEMANDE VIP")
         print(f"Prénom : {first_name}")
         print(f"Pseudo Telegram : {username}")
         print(f"ID Telegram : {uid}")
         print(f"Pseudo Stake : {pseudo_stake}")
+        print(f"Discord : {discord}")
 
-        # Réponse utilisateur
         await update.message.reply_text(
             f"✅ Merci !\n\n"
             f"🔒 Voici le lien du VIP :\n{VIP_LINK}\n\n"
